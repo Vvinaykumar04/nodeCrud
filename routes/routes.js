@@ -128,4 +128,21 @@ router.get("/delete/:id", async (req, res) => {
     }    
 });
 
+// Dublicate Delete user data
+router.get("/delete/:id", async (req, res) => {
+    try {
+        let id = req.params.id;
+        const user = await User.findByIdAndDelete(id);
+
+        req.session.message = {
+            type: 'success',
+            message: 'User data deleted successfully',
+        };
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }    
+});
+
 module.exports = router;
