@@ -1,8 +1,11 @@
 const express = require('express');
 const router =  express.Router();
 const User = require('../models/users');
+const Products = require('../models/products');
+
 const multer = require('multer');
 const fs = require('fs');
+const mainController = require('../controllers/mainController');
 
 // Image upload
 var storage = multer.diskStorage({
@@ -128,20 +131,33 @@ router.get("/delete/:id", async (req, res) => {
     }    
 });
 
-// Dublicate Delete user data
-router.get("/delete/:id", async (req, res) => {
-    try {
-        let id = req.params.id;
-        const user = await User.findByIdAndDelete(id);
 
-        req.session.message = {
-            type: 'success',
-            message: 'User data deleted successfully',
-        };
-        res.redirect('/');
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }    
+// For products
+
+// Call a view file
+router.get("/add-products", mainController.addProduct);
+
+// To add products
+  router.post('/add-product', upload, (req, res) => {
+    const products = new Products({
+        p_name: req.body.p_name,
+        p_id: req.body.p_id,
+        price: req.body.price,
+    });
+    products.save()
+        .then(() => {
+            req.session.message = {
+                type: 'success',
+                message: 'User added successfully!'
+            };
+            res.redirect("/");
+        })
+        .catch(err => {
+            res.json({ message: err.message, type: 'danger' });
+        });
 });
+
+
+
+
 module.exports = router;
