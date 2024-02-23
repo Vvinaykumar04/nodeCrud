@@ -2,7 +2,7 @@ const express = require('express');
 const router =  express.Router();
 const User = require('../models/users');
 const Products = require('../models/products');
-
+const app = express();
 const multer = require('multer');
 const fs = require('fs');
 const mainController = require('../controllers/mainController');
@@ -17,12 +17,10 @@ var storage = multer.diskStorage({
     },
 });
 
-var upload = multer({
-    storage: storage,
-}).single('image');
+var upload = multer({ storage });
 
 // Insert usertabase
-router.post('/add', upload, (req, res) => {
+router.post('/add', upload.single('image'), (req, res) => {
     const user = new User({
         name: req.body.name,
         email: req.body.email,
@@ -82,7 +80,7 @@ router.get("/edit/:id", async (req, res) => {
 });
 
 // Update user data
-router.post('/update/:id', upload, async (req, res) => {
+router.post('/update/:id', upload.single('image'), async (req, res) => {
     let id = req.params.id;
     let new_image = '';
 
@@ -138,25 +136,39 @@ router.get("/delete/:id", async (req, res) => {
 router.get("/add-products", mainController.addProduct);
 
 // To add products
-  router.post('/add-product', upload, (req, res) => {
+router.post('/add-product', (req, res) => {
     const products = new Products({
         p_name: req.body.p_name,
         p_id: req.body.p_id,
         price: req.body.price,
     });
     products.save()
-        .then(() => {
-            req.session.message = {
-                type: 'success',
-                message: 'User added successfully!'
-            };
-            res.redirect("/");
-        })
-        .catch(err => {
-            res.json({ message: err.message, type: 'danger' });
-        });
+    .then(() => {
+        req.session.message = {
+            type: 'success',
+            message: 'User added successfully!'
+        };
+        res.redirect("/");
+    })
+    .catch(err => {
+        res.json({ message: err.message, type: 'danger' });
+    });
 });
 
+// To all products
+router.get('/all-products', async (req, res) => {
+    try {
+        // Fetch data from MongoDB using Mongoose
+        const products = await Products.find();
+
+        // Pass the data to the index page
+        res.render('allProduct', { products, title: 'Product List' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 
 
